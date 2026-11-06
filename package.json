@@ -1,0 +1,133 @@
+{
+  "name": "lvgl-go",
+  "displayName": "LVGL Go",
+  "description": "Preview LVGL Pro UIs live on your phone or tablet.",
+  "version": "1.0.0",
+  "publisher": "bauertronix",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/giobauermeister/lvgl-go-extension.git"
+  },
+  "homepage": "https://github.com/giobauermeister/lvgl-go-extension#readme",
+  "bugs": {
+    "url": "https://github.com/giobauermeister/lvgl-go-extension/issues"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "workspaceContains:project.xml",
+    "workspaceContains:lvgl-go.json"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "LVGL Go runs project build commands and serves their output to paired devices."
+    },
+    "virtualWorkspaces": false
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "lvglGo.start",
+        "title": "LVGL Go: Start Session"
+      },
+      {
+        "command": "lvglGo.stop",
+        "title": "LVGL Go: Stop Session"
+      },
+      {
+        "command": "lvglGo.build",
+        "title": "LVGL Go: Build"
+      },
+      {
+        "command": "lvglGo.exportHtml",
+        "title": "LVGL Go: Export HTML Preview"
+      },
+      {
+        "command": "lvglGo.selectScreen",
+        "title": "LVGL Go: Choose Starting Screen"
+      },
+      {
+        "command": "lvglGo.showQr",
+        "title": "LVGL Go: Show QR Code"
+      },
+      {
+        "command": "lvglGo.dashboard",
+        "title": "LVGL Go: Open Dashboard"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "lvgl-go.json",
+        "url": "./schema.json"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "lvglGo.start",
+          "when": "resourceFilename == project.xml && isWorkspaceTrusted",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "lvglGo.start",
+          "when": "resourceFilename == project.xml && isWorkspaceTrusted",
+          "group": "navigation"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "lvglGo",
+          "title": "LVGL Go",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "lvglGo": [
+        {
+          "id": "lvglGo.dashboard",
+          "name": "LVGL Go",
+          "contextualTitle": "LVGL Go",
+          "type": "webview"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "test": "npm run compile && node --test test/*.test.js",
+    "package": "vsce package --no-rewrite-relative-links --readme-path artifacts/extension-readme.md --out artifacts/",
+    "vscode:prepublish": "npm run docs && npm run compile",
+    "docs": "node scripts/package-description.js",
+    "package:pwa": "node scripts/package-pwa.js",
+    "icons": "node scripts/generate-icons.js"
+  },
+  "dependencies": {
+    "jsqr": "^1.4.0",
+    "qrcode": "^1.5.4",
+    "sax": "1.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/vscode": "~1.95.0",
+    "@vscode/vsce": "^4.0.0",
+    "markdown-it": "^14.3.3",
+    "typescript": "^5.7.0"
+  },
+  "icon": "icon.png"
+}

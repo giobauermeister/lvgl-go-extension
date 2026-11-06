@@ -1,0 +1,29 @@
+{
+  "projectDir": ".",
+  "outputDir": "${buildDir}/bin",
+  "entry": "index.html",
+  "watch": true,
+  "debounceMs": 900,
+  "build": [
+    {
+      "command": "emcmake",
+      "args": [
+        "cmake",
+        "-S",
+        "${projectDir}/sim",
+        "-B",
+        "${buildDir}",
+        "-DCMAKE_BUILD_TYPE=Release"
+      ]
+    },
+    {
+      "command": "cmake",
+      "args": [
+        "--build",
+        "${buildDir}",
+        "--parallel",
+        "4"
+      ]
+    }
+  ]
+}

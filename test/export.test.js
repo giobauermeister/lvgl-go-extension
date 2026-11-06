@@ -1,0 +1,52 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {mkdtemp,mkdir,writeFile,readFile,rm,symlink}=require('node:fs/promises');
+const os=require('node:os');
+const path=require('node:path');
+const {gunzipSync}=require('node:zlib');
+const {exportHtml}=require('../dist/export');
+const extension=path.join(__dirname,'..');
+
+test('single HTML export embeds compiled assets and all frames without source files or session metadata',async t=>{
+  const folder=await mkdtemp(path.join(os.tmpdir(),'lvgl-go-export-'));t.after(()=>rm(folder,{recursive:true,force:true}));
+  await mkdir(path.join(folder,'preview/lvgl-go-overlay'),{recursive:true});
+  await writeFile(path.join(folder,'preview/index.html'),'<script src=lvgl-go-player.js></script><script src=index.js async></script><!-- https://private-session.test/s/pairing-secret -->');
+  const script='var Module=Module||{}; console.log("</script><script>escaped");';
+  await writeFile(path.join(folder,'preview/index.js'),script);
+  await writeFile(path.join(folder,'preview/index.wasm'),Buffer.from([0,97,115,109,1,0,0,0]));
+  await writeFile(path.join(folder,'preview/index.data'),Buffer.from([1,2,3]));
+  await writeFile(path.join(folder,'preview/lvgl-go-player.js'),'replaced player');
+  for(const file of ['project.xml','secret_gen.c','secret.h','index.js.map','liblvgl.a','lvgl-go.json','package.json'])await writeFile(path.join(folder,'preview',file),'private source sentinel');
+  await writeFile(path.join(folder,'preview/lvgl-go-overlay/manifest.json'),JSON.stringify({version:1,initial:0,targets:[]}));
+  await writeFile(path.join(folder,'preview/lvgl-go-overlay/frame-0.png'),'frame one');
+  await writeFile(path.join(folder,'preview/lvgl-go-overlay/frame-1.png'),'frame two');
+  await writeFile(path.join(folder,'outside.png'),'private symlink target');
+  await symlink(path.join(folder,'outside.png'),path.join(folder,'preview/link.png'));
+  const html=(await exportHtml({directory:path.join(folder,'preview'),entry:'index.html'},extension,'Demo </title><script>unsafe</script>')).toString();
+  assert(html.includes('Demo &lt;/title&gt;'));
+  assert(html.includes((await readFile(path.join(extension,'LICENSE.txt'),'utf8')).trim()));
+  assert(!html.includes('pairing-secret'));assert(!html.includes('private source sentinel'));
+  assert(!html.includes('replaced player'));assert(!html.includes('<script>unsafe</script>'));
+  const payload=JSON.parse(gunzipSync(Buffer.from(html.match(/id="lvgl-go-bundle"[^>]*>([^<]+)</)[1],'base64')));
+  assert.equal(payload.script,'index.js');assert.equal(payload.wasm,'index.wasm');
+  assert.equal(Buffer.from(payload.files['index.js'].data,'base64').toString(),script);
+  assert.deepEqual(Object.keys(payload.files).sort(),['index.data','index.js','index.wasm','lvgl-go-overlay/frame-0.png','lvgl-go-overlay/frame-1.png','lvgl-go-overlay/manifest.json']);
+  for(const id of ['scale-auto','scale-fit','frame-toggle','screen-select','display-select','canvas','console-toggle','runtime-console','console-resize','memory-toggle','memory-popup','memory-chart-line','view-toggle','view-panel','memory-drag'])assert(html.includes('id="'+id+'"'));
+  assert(html.includes('LVGLGoView.install'));
+  for(const id of ['scan','connection-led','install','back','qr'])assert(!html.includes('id="'+id+'"'));
+  assert(!/<script[^>]+src=/.test(html));assert(!/<link[^>]+href=/.test(html));
+});
+
+test('HTML export resolves nested loader paths and rejects missing builds and traversal',async t=>{
+  const folder=await mkdtemp(path.join(os.tmpdir(),'lvgl-go-export-nested-'));t.after(()=>rm(folder,{recursive:true,force:true}));
+  await mkdir(path.join(folder,'nested'));
+  await writeFile(path.join(folder,'nested/index.html'),'<script src="app.js"></script>');
+  await writeFile(path.join(folder,'nested/app.js'),'var Module=Module||{};');
+  const snapshot={directory:folder,entry:'nested/index.html'};
+  await assert.rejects(exportHtml(snapshot,extension,'Demo'),/one.*WASM file/);
+  await writeFile(path.join(folder,'nested/app.wasm'),Buffer.from([0,97,115,109,1,0,0,0]));
+  const html=(await exportHtml(snapshot,extension,'Demo')).toString();
+  const payload=JSON.parse(gunzipSync(Buffer.from(html.match(/id="lvgl-go-bundle"[^>]*>([^<]+)</)[1],'base64')));
+  assert.equal(payload.script,'nested/app.js');assert.equal(payload.folder,'nested');
+  await assert.rejects(exportHtml({directory:folder,entry:'../private.html'},extension,'Demo'),/Invalid preview entry/);
+});

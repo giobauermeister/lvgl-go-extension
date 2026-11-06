@@ -1,0 +1,12 @@
+#surface{position:absolute;inset:0;overflow:hidden}
+#hardware-stage{position:absolute;left:0;top:0;transform-origin:top left;isolation:isolate}
+#hardware-image{position:absolute;left:0;top:0;pointer-events:none;user-select:none}
+#hardware-stage canvas{position:absolute;max-width:none;max-height:none;z-index:1}
+#hardware-buttons{position:absolute;inset:0;z-index:2;pointer-events:none}
+#hardware-buttons button{position:absolute;padding:0;border:0;border-radius:6px;background:transparent;pointer-events:auto;touch-action:none;-webkit-tap-highlight-color:transparent}
+#hardware-screen-hint{position:absolute;z-index:3;pointer-events:none;opacity:0}
+#hardware-buttons button::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0}
+#hardware-stage.hardware-hint #hardware-screen-hint,#hardware-stage.hardware-hint #hardware-buttons button::after{background:#a5edbd2e;animation:hardware-hint .9s ease-in-out}
+@keyframes hardware-hint{0%,100%{opacity:0}40%{opacity:1}}
+@media(prefers-reduced-motion:reduce){#hardware-stage.hardware-hint #hardware-screen-hint,#hardware-stage.hardware-hint #hardware-buttons button::after{animation-name:hardware-hint-steady}}
+@keyframes hardware-hint-steady{0%,85%{opacity:1}100%{opacity:0}}

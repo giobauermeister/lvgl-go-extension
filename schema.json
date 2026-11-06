@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LVGL Go project",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "projectDir": {
+      "type": "string",
+      "default": ".",
+      "description": "Exported C project to watch. Relative to the workspace folder."
+    },
+    "outputDir": {
+      "type": "string",
+      "default": "${buildDir}/bin",
+      "description": "Directory containing only the browser bundle to publish."
+    },
+    "entry": {
+      "type": "string",
+      "default": "index.html"
+    },
+    "watch": {
+      "type": "boolean",
+      "default": true
+    },
+    "debounceMs": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 60000,
+      "default": 900
+    },
+    "build": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/command"
+      },
+      "description": "Optional custom build adapter. Omit to compile the generated C export using the extension runtime."
+    },
+    "tunnel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Advanced troubleshooting: optional path to cloudflared. Otherwise an installed or checksum-verified downloaded client is used."
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lvglSourceDir": {
+          "type": "string"
+        },
+        "defaults": {
+          "type": "string"
+        },
+        "initialScreen": {
+          "type": "string",
+          "description": "Optional permanent screen variable override."
+        },
+        "startScreen": {
+          "type": "string",
+          "pattern": "^[A-Za-z_]\\w*_create$",
+          "description": "Exported screen constructor to call when UI initialization does not load a screen, e.g. screen_live_view_create."
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "assetsDir": {
+          "type": "string"
+        },
+        "assetPath": {
+          "type": "string"
+        },
+        "lvglLibraryDir": {
+          "type": "string",
+          "description": "Optional versioned LVGL Pro libs directory containing lib/liblvgl.a and include/lvgl. Detected automatically by default."
+        }
+      }
+    },
+    "appUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Advanced: HTTPS address of a separately hosted PWA, ending in /app/. Does not start a host. Omit to use the default app.",
+      "default": "https://go.bauertronix.com.br/app/"
+    }
+  },
+  "definitions": {
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "args"
+      ],
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Executable name or absolute path; no shell is used."
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cwd": {
+          "type": "string",
+          "default": "${workspaceFolder}"
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+  <title>LVGL</title>
+  <link rel="stylesheet" href="lvgl-go-hardware.css">
+  <style>
+    :root{color-scheme:dark}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;touch-action:none;background:transparent}
+    body{display:grid;place-items:center}
+    canvas{display:block;touch-action:none;outline:none;max-width:100%;max-height:100%;object-fit:contain}
+    #error{display:none;position:fixed;inset:0;padding:24px;background:#281b1b;color:#fff;font:14px system-ui;white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <div id="surface"><div id="hardware-stage"><img id="hardware-image" alt="" hidden><canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas><div id="hardware-buttons"></div><div id="hardware-screen-hint" aria-hidden="true"></div></div></div>
+  <div id="error"></div>
+  <script src="lvgl-go-hardware.js"></script>
+  <script src="lvgl-go-player.js"></script>
+  <script>
+    const canvas = document.getElementById('canvas');
+    var Module = {
+      canvas,
+      print: (...args) => console.log(...args),
+      printErr: (...args) => console.error(...args),
+      postRun: () => player.ready(),
+      onAbort: reason => {
+        player.failed(reason);
+        const error = document.getElementById('error');
+        error.textContent = 'LVGL runtime stopped: ' + reason;
+        error.style.display = 'block';
+      }
+    };
+    const player = LVGLGoPlayer.install(Module, canvas);
+  </script>
+  {{{ SCRIPT }}}
+</body>
+</html>

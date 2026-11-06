@@ -1,0 +1,62 @@
+<!doctype html>
+<!--
+LVGL Go preview player:
+{{LICENSE}}
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <title>LVGL Go · {{PROJECT}}</title>
+  <style>{{STYLES}}</style>
+</head>
+<body class="playing">
+  <header class="topbar"><div class="brand"><span class="shared-logo" aria-hidden="true">{{LOGO}}</span>LVGL Go</div><span class="shared-project">{{PROJECT}}</span></header>
+  <section class="player">
+    <div class="player-toolbar"><span class="shared-caption">Shared preview</span><div class="scale-control"><span id="scale-label">Size</span><div class="scale-options" role="group" aria-labelledby="scale-label"><button id="scale-auto" type="button" aria-pressed="true">Auto</button><button id="scale-fit" type="button" aria-pressed="false">Fit</button></div></div></div>
+    <main>
+      <div id="surface"><div id="hardware-stage"><img id="hardware-image" alt="" hidden><canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas><div id="hardware-buttons"></div><div id="hardware-screen-hint" aria-hidden="true"></div></div></div>
+      <button id="screen-dismiss" class="screen-dismiss" type="button" tabindex="-1" aria-label="Close menu" hidden></button>
+      <div id="preview-controls" class="preview-controls">
+        <div id="display-control" class="screen-control" hidden><span>Display</span><button id="display-select" type="button" tabindex="-1" aria-expanded="false" aria-controls="display-menu"><span id="display-value">Display</span><svg class="shared-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><div id="display-menu" class="screen-menu" role="group" aria-label="Displays" hidden></div></div>
+        <div id="screen-control" class="screen-control" hidden><span>Screen</span><button id="screen-select" type="button" tabindex="-1" aria-expanded="false" aria-controls="screen-menu"><span id="screen-value">Current screen</span><svg class="shared-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><div id="screen-menu" class="screen-menu" role="group" aria-label="Screens" hidden></div></div>
+        <div id="view-controls" class="view-controls">
+          <button id="view-toggle" class="view-toggle" type="button" tabindex="-1" aria-expanded="false" aria-controls="view-panel" aria-label="View options" title="View options"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+          <section id="view-panel" class="view-panel" aria-label="View options" hidden>
+            <label id="frame-control" class="view-option" hidden><span>Hardware frame</span><input id="frame-toggle" class="view-switch" type="checkbox" role="switch" tabindex="-1"></label>
+            <button id="memory-toggle" class="view-option" type="button" role="switch" tabindex="-1" aria-checked="false" aria-controls="memory-popup"><span>Memory</span><span class="view-switch" aria-hidden="true"></span></button>
+            <button id="console-toggle" class="view-option" type="button" role="switch" tabindex="-1" aria-checked="false" aria-controls="runtime-console"><span>Console</span><span class="view-switch" aria-hidden="true"></span></button>
+          </section>
+        </div>
+      </div>
+      <div id="loading"><div class="loading-content"><span class="loading-spinner" aria-hidden="true"></span><span id="loading-label" role="status" aria-live="polite">Loading UI…</span></div></div>
+      <div id="shared-error" role="alert" hidden></div>
+    </main>
+      <section id="runtime-console" class="runtime-console" aria-label="WASM console" hidden>
+        <div id="console-resize" class="console-resize" title="Drag to resize console" aria-hidden="true"><span></span></div>
+        <div class="console-toolbar"><strong>WASM console</strong><button id="console-clear" class="quiet" type="button" tabindex="-1">Clear</button></div>
+        <div id="console-output" class="console-output" aria-label="Runtime logs"></div>
+      </section>
+      <aside id="memory-popup" class="memory-popup" aria-label="LVGL memory monitor" hidden>
+        <div id="memory-drag" class="memory-heading"><strong>LVGL memory</strong><button id="memory-close" class="quiet" type="button" tabindex="-1">Close</button></div>
+        <div id="memory-screen" class="memory-screen">Current screen</div>
+        <p id="memory-state" class="memory-state">Waiting for runtime measurements…</p>
+        <div class="memory-chart"><span id="memory-chart-max">—</span><svg viewBox="0 0 500 140" role="img" aria-label="Recent LVGL allocation requests"><path d="M10 10V130H490" class="memory-axis"/><line id="memory-chart-budget" x1="10" x2="490" y1="0" y2="0" visibility="hidden" class="memory-budget-line"/><polyline id="memory-chart-line" points=""/><polyline id="memory-chart-peak" points="" class="memory-peak-line"/><circle id="memory-chart-current" cx="490" cy="-10" r="3"/></svg><span id="memory-chart-caption">Requested bytes · live / peak</span></div>
+        <dl class="memory-stats"><div><dt>Live requested</dt><dd id="memory-used">—</dd></div><div><dt>Peak since UI init</dt><dd id="memory-peak">—</dd></div><div><dt>Change since UI init</dt><dd id="memory-delta">—</dd></div><div><dt>Live allocations</dt><dd id="memory-blocks">—</dd></div></dl>
+        <dl id="memory-pool" class="memory-stats" hidden><div><dt>Pool used</dt><dd id="memory-pool-used">—</dd></div><div><dt>Pool free</dt><dd id="memory-pool-free">—</dd></div><div><dt>Largest free block</dt><dd id="memory-pool-largest">—</dd></div><div><dt>Fragmentation</dt><dd id="memory-pool-frag">—</dd></div></dl>
+        <label class="memory-budget">Reference budget <input id="memory-budget" type="number" inputmode="numeric" min="1" max="4194304" step="1" placeholder="Optional" aria-label="Reference memory budget in KiB"> KiB</label>
+        <p id="memory-budget-status" class="memory-state"></p>
+        <p id="memory-build" class="memory-build"></p>
+        <p class="memory-note">Total LVGL requests across live screens, caches and LVGL display allocations. Excludes allocator overhead, static assets, stacks and direct malloc calls. Preview measurements; firmware usage depends on its build.</p>
+      </aside>
+  </section>
+  <script id="lvgl-go-bundle" type="application/octet-stream">{{BUNDLE}}</script>
+  <script>{{PLAYER}}</script>
+  <script>{{HARDWARE}}</script>
+  <script>{{MEMORY}}</script>
+  <script>{{CONSOLE}}</script>
+  <script>{{VIEW}}</script>
+  <script>{{STANDALONE}}</script>
+</body>
+</html>

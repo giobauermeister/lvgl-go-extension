@@ -1,0 +1,31 @@
+# Dependencies and generated output
+node_modules/
+/dist/
+/artifacts/
+/build/
+/build-*/
+/coverage/
+*.vsix
+*.tsbuildinfo
+
+# Local preview caches and project configuration
+/.lvgl-go/
+lvgl-go.json
+!examples/*.json
+CMakeUserPresets.json
+
+# Local credentials and logs
+.netlify/
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.log
+
+# Personal editor settings and operating-system files
+/.vscode/settings.json
+.DS_Store
+Thumbs.db
