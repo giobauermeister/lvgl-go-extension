@@ -7,6 +7,11 @@ on:
   pull_request:
     branches: [main, master]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Existing version tag to publish (leave blank to build only)'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -27,6 +32,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ inputs.release_tag && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -35,9 +41,9 @@ jobs:
           cache: npm
 
       - name: Validate release tag
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           node <<'NODE'
           const version = require('./package.json').version;
@@ -47,7 +53,7 @@ jobs:
           NODE
           for branch in main master; do
             if git show-ref --verify --quiet "refs/remotes/origin/$branch" &&
-               git merge-base --is-ancestor "$GITHUB_SHA" "refs/remotes/origin/$branch"; then
+               git merge-base --is-ancestor HEAD "refs/remotes/origin/$branch"; then
               exit 0
             fi
           done
@@ -88,7 +94,7 @@ jobs:
 
   release:
     name: Publish release downloads
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && startsWith(inputs.release_tag, 'v'))
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -101,15 +107,22 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
+          # Both packages are uploaded as raw files; keep the PWA ZIP intact.
+          skip-decompress: true
 
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           assets=("artifacts/lvgl-go-${RELEASE_TAG#v}.vsix" "artifacts/lvgl-go-pwa.zip")
-          for asset in "${assets[@]}"; do test -s "$asset"; done
+          for asset in "${assets[@]}"; do
+            if [[ ! -s "$asset" ]]; then
+              echo "::error::Missing or empty release asset: $asset" >&2
+              exit 1
+            fi
+          done
 
           if release=$(gh release view "$RELEASE_TAG" --json isDraft,assets 2>/dev/null); then
             draft=$(jq -r '.isDraft' <<< "$release")

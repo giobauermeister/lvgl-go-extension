@@ -12,6 +12,8 @@ npm run package
 
 `npm test` compiles TypeScript and runs the Node test suite. Tests use temporary directories and local HTTP/HTTPS servers; certificate fixtures require OpenSSL.
 
+Release workflow tests also use Bash and jq.
+
 In VS Code, press F5 to launch an Extension Development Host, then open an LVGL Pro project there. Building UI previews also requires the Emscripten SDK and CMake listed in the README.
 
 The runtime prefers SDL’s `opengles2` renderer (WebGL) to present the LVGL framebuffer. LVGL still draws the UI in software, but WebGL avoids an additional full-frame CPU alpha blend during presentation. SDL falls back to its normal renderer selection if WebGL is unavailable. Animated, high-resolution projects can still spend substantial time generating and drawing frames on the browser’s main thread.
@@ -23,7 +25,7 @@ The **Build packages** workflow installs dependencies from `package-lock.json` a
 - Pull requests into `main` or `master` run tests before merging.
 - Pushes to `main` or `master`, including merges, also build both packages.
 - Version tags beginning with `v` build both packages and publish a GitHub Release.
-- Manual runs from the Actions tab build both packages without publishing a release.
+- Manual runs from the Actions tab build both packages. Leave `release_tag` blank to build only, or supply an existing version tag to publish that version.
 
 Other branch pushes do not trigger the workflow.
 
@@ -46,6 +48,8 @@ git push origin v1.0.0
 The tag must match the package version and point to a commit already merged into `main` or `master`. After tests and packaging succeed, the workflow uploads the tested VSIX and PWA ZIP to a GitHub Release. Versions containing a prerelease suffix, such as `1.1.0-beta.1`, are marked as prereleases.
 
 A new release stays in draft until both files are attached. Rerunning a tag build completes missing uploads while preserving existing release files.
+
+If a workflow fix is needed after a tag was pushed, merge the fix into `main`, then run **Build packages → Run workflow** from `main` with `release_tag` set to the existing tag, for example `v1.0.0`. The build checks out that tag and validates its version and ancestry. The release job uses the corrected workflow to publish its packages. This preserves the original tag; rerunning the old failed run would still use its old workflow.
 
 ## Build output
 
